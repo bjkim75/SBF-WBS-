@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useRef, useEffect } from 'react';
 import { useWbsStore } from '../../store/wbsStore';
 import { NormalizedWbsTicket } from '../../models/wbsTicket';
 import { WbsFileUpload } from './WbsFileUpload';
@@ -28,6 +28,14 @@ export function WbsTicketPanel() {
   const error = useWbsStore(state => state.error);
   const currentTickets = useWbsStore(state => state.currentTickets);
 
+  const panelRef = useRef<HTMLDivElement>(null);
+
+  // Auto-scroll to panel when workId is selected
+  useEffect(() => {
+    if (selectedWorkId && panelRef.current) {
+      panelRef.current.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+  }, [selectedWorkId]);
 
   // 티켓 목록 메모이제이션
   const tickets: NormalizedWbsTicket[] = useMemo(() => {
@@ -40,7 +48,7 @@ export function WbsTicketPanel() {
   // State 2: WBS Index가 없으면 파일 업로드 안내
   if (wbsIndex === null) {
     return (
-      <div className="wbs-ticket-panel">
+      <div className="wbs-ticket-panel" ref={panelRef}>
         <div className="wbs-ticket-panel__header">
           <h3>WBS Tickets: {selectedWorkId}</h3>
           <WbsFileUpload />
@@ -53,7 +61,7 @@ export function WbsTicketPanel() {
   // State 3: 로딩 중
   if (isLoading) {
     return (
-      <div className="wbs-ticket-panel">
+      <div className="wbs-ticket-panel" ref={panelRef}>
         <div className="wbs-ticket-panel__header">
           <h3>WBS Tickets: {selectedWorkId}</h3>
         </div>
@@ -65,7 +73,7 @@ export function WbsTicketPanel() {
   // State 4: 에러 발생
   if (error !== null) {
     return (
-      <div className="wbs-ticket-panel">
+      <div className="wbs-ticket-panel" ref={panelRef}>
         <div className="wbs-ticket-panel__header">
           <h3>WBS Tickets: {selectedWorkId}</h3>
           <WbsFileUpload />
@@ -87,7 +95,7 @@ export function WbsTicketPanel() {
   // State 5: 연결된 Ticket 없음
   if (tickets.length === 0) {
     return (
-      <div className="wbs-ticket-panel">
+      <div className="wbs-ticket-panel" ref={panelRef}>
         <div className="wbs-ticket-panel__header">
           <h3>WBS Tickets: {selectedWorkId} (0건)</h3>
           <WbsFileUpload replace />
@@ -99,7 +107,7 @@ export function WbsTicketPanel() {
 
   // State 6: Ticket 목록 표시
   return (
-    <div className="wbs-ticket-panel">
+    <div className="wbs-ticket-panel" ref={panelRef}>
       <div className="wbs-ticket-panel__header">
         <h3>WBS Tickets: {selectedWorkId} ({tickets.length}건)</h3>
         <WbsFileUpload replace />
