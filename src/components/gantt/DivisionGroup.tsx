@@ -5,14 +5,16 @@ interface Props {
   group: GanttDivisionGroup;
   scale: GanttTimeScale;
   isGrouped: boolean;
+  /** workId 클릭 시 호출 (WBS Ticket 조회 트리거) */
+  onWorkIdClick?: (workId: string) => void;
 }
 
-export function DivisionGroup({ group, scale, isGrouped }: Props) {
+export function DivisionGroup({ group, scale, isGrouped, onWorkIdClick }: Props) {
   if (!isGrouped) {
     return (
       <>
         {group.rows.map(row => (
-          <TaskRow key={row.workId} row={row} scale={scale} />
+          <TaskRow key={row.workId} row={row} scale={scale} onWorkIdClick={onWorkIdClick} />
         ))}
       </>
     );
@@ -26,7 +28,7 @@ export function DivisionGroup({ group, scale, isGrouped }: Props) {
       </div>
       <div className="division-group__body">
         {group.rows.map(row => (
-          <TaskRow key={row.workId} row={row} scale={scale} />
+          <TaskRow key={row.workId} row={row} scale={scale} onWorkIdClick={onWorkIdClick} />
         ))}
       </div>
     </div>

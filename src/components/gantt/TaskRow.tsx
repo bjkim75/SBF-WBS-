@@ -3,19 +3,35 @@ import { GanttRow, GanttTimeScale } from '../../models/viewModel';
 interface Props {
   row: GanttRow;
   scale: GanttTimeScale;
+  /** workId 클릭 시 호출되는 콜백 (WBS Ticket 조회 트리거) */
+  onWorkIdClick?: (workId: string) => void;
 }
 
-export function TaskRow({ row, scale }: Props) {
+export function TaskRow({ row, scale, onWorkIdClick }: Props) {
+  const handleWorkIdClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (onWorkIdClick) {
+      onWorkIdClick(row.workId);
+    }
+  };
+
   return (
     <div className="task-row">
       <div className="task-row__info">
-        <span className="task-row__id" title={row.workId}>{row.workId}</span>
+        <span
+          className={`task-row__id ${onWorkIdClick ? 'task-row__id--clickable' : ''}`}
+          title={row.workId}
+          onClick={handleWorkIdClick}
+          role={onWorkIdClick ? 'button' : undefined}
+          tabIndex={onWorkIdClick ? 0 : undefined}
+        >
+          {row.workId}
+        </span>
         <span className="task-row__name" title={row.workName}>{row.workName}</span>
         <span className="task-row__assignee" title={row.assigneeR}>{row.assigneeR}</span>
       </div>
       <div className="task-row__timeline" style={{ width: scale.totalWidth }}>
         {row.phaseSegments.length > 0 ? (
-          // Phase color bar (multi-segment)
           row.phaseSegments.map((seg, i) => (
             <div
               key={i}

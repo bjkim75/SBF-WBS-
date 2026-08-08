@@ -6,6 +6,7 @@ import { FilterPanel } from './components/filter/FilterPanel';
 import { AggregationPanel } from './components/aggregation/AggregationPanel';
 import { MilestoneGanttView } from './components/gantt/MilestoneGanttView';
 import { DrilldownPanel } from './components/drilldown/DrilldownPanel';
+import { WbsTicketPanel } from './components/wbs/WbsTicketPanel';
 import { DownloadButton } from './components/download/DownloadButton';
 import { SchemaValidationResult } from './models/raw';
 import { useDataStore } from './store/dataStore';
@@ -99,6 +100,7 @@ function App() {
                 <AggregationPanel />
                 <MilestoneGanttView />
                 <DrilldownPanel />
+                <WbsTicketPanel />
               </div>
             </div>
           </section>

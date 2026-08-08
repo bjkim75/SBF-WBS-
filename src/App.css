@@ -121,6 +121,10 @@
   align-self: start;
 }
 
+.dashboard__charts {
+  min-width: 0;
+}
+
 /* Filter Panel */
 .filter-panel {
   background: white;
@@ -301,18 +305,100 @@
   cursor: pointer;
 }
 
-.milestone-gantt__container {
+/* Horizontal scrollbar track (top) */
+.milestone-gantt__scrollbar-track-h {
+  position: relative;
+  height: 14px;
+  background: #f0f0f0;
+  border: 1px solid #d0d0d0;
+  border-bottom: none;
+  border-radius: 8px 8px 0 0;
+  cursor: pointer;
+}
+
+.milestone-gantt__scrollbar-thumb-h {
+  position: absolute;
+  top: 2px;
+  height: 10px;
+  background: #888;
+  border-radius: 5px;
+  cursor: grab;
+  min-width: 30px;
+  transition: background 0.15s;
+}
+
+.milestone-gantt__scrollbar-thumb-h:hover {
+  background: #666;
+}
+
+.milestone-gantt__scrollbar-thumb-h:active {
+  background: #444;
+  cursor: grabbing;
+}
+
+/* Body: vertical scrollbar + container side by side */
+.milestone-gantt__body {
+  display: flex;
   border: 1px solid #e0e0e0;
-  border-radius: 8px;
+  border-top: none;
+  border-radius: 0 0 8px 8px;
+  overflow: hidden;
+}
+
+/* Vertical scrollbar track (left) */
+.milestone-gantt__scrollbar-track-v {
+  position: relative;
+  width: 14px;
+  min-width: 14px;
+  background: #f0f0f0;
+  border-right: 1px solid #d0d0d0;
+  cursor: pointer;
+}
+
+.milestone-gantt__scrollbar-thumb-v {
+  position: absolute;
+  left: 2px;
+  width: 10px;
+  background: #888;
+  border-radius: 5px;
+  cursor: grab;
+  min-height: 30px;
+  transition: background 0.15s;
+}
+
+.milestone-gantt__scrollbar-thumb-v:hover {
+  background: #666;
+}
+
+.milestone-gantt__scrollbar-thumb-v:active {
+  background: #444;
+  cursor: grabbing;
+}
+
+/* Content container — overflow-x auto for sticky to work, native scrollbar hidden */
+.milestone-gantt__container {
+  flex: 1;
   overflow-x: auto;
   overflow-y: hidden;
   background: white;
-  width: 100%;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
 }
 
+.milestone-gantt__container::-webkit-scrollbar {
+  display: none;
+}
+
+/* Lanes — overflow-y auto for vertical scroll, native scrollbar hidden */
 .milestone-gantt__lanes {
-  max-height: 600px;
+  overflow-x: hidden;
   overflow-y: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.milestone-gantt__lanes::-webkit-scrollbar {
+  display: none;
 }
 
 /* Time Axis */
@@ -356,6 +442,8 @@
   background: #f5f7fa;
   cursor: pointer;
   user-select: none;
+  z-index: 2;
+  transform: translateX(var(--gantt-scroll-left, 0px));
 }
 
 .swimlane__header:hover {
@@ -401,6 +489,8 @@
   color: #555;
   background: #f9fafb;
   border-bottom: 1px solid #f0f0f0;
+  z-index: 2;
+  transform: translateX(var(--gantt-scroll-left, 0px));
 }
 
 .division-group__name {
@@ -423,15 +513,24 @@
   background: #f0f7ff;
 }
 
+.task-row:hover .task-row__info {
+  background: #f0f7ff;
+}
+
 .task-row__info {
   display: flex;
   align-items: center;
   gap: 8px;
   width: 320px;
   min-width: 320px;
+  height: 100%;
   padding: 0 8px 0 36px;
   font-size: 11px;
   overflow: hidden;
+  background: white;
+  z-index: 2;
+  transform: translateX(var(--gantt-scroll-left, 0px));
+  box-sizing: border-box;
 }
 
 .task-row__id {
@@ -443,6 +542,23 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.task-row__id--clickable {
+  cursor: pointer;
+  user-select: none;
+}
+
+.task-row__id--clickable:hover {
+  color: #004499;
+  text-decoration: underline;
+  background: #e8f0fe;
+  border-radius: 2px;
+}
+
+.task-row__id--clickable:active {
+  color: #003388;
+  background: #d0e0f8;
 }
 
 .task-row__name {
@@ -725,4 +841,97 @@
   background: #ccc;
   border-color: #ccc;
   cursor: default;
+}
+
+/* WBS Ticket Panel */
+.wbs-ticket-panel {
+  margin-top: 24px;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  background: white;
+  max-height: 500px;
+  display: flex;
+  flex-direction: column;
+}
+
+.wbs-ticket-panel__header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  border-bottom: 1px solid #e0e0e0;
+  background: #f8f9fa;
+  border-radius: 8px 8px 0 0;
+}
+
+.wbs-ticket-panel__header h3 {
+  margin: 0;
+  font-size: 14px;
+}
+
+.wbs-ticket-panel__error {
+  padding: 12px 16px;
+  color: #d32f2f;
+  font-size: 12px;
+}
+
+.wbs-ticket-panel__table-wrapper {
+  overflow: auto;
+  flex: 1;
+}
+
+.wbs-ticket-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 11px;
+}
+
+.wbs-ticket-table th {
+  position: sticky;
+  top: 0;
+  background: #f5f5f5;
+  padding: 6px 8px;
+  border-bottom: 1px solid #ddd;
+  text-align: left;
+  font-size: 10px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.wbs-ticket-table td {
+  padding: 4px 8px;
+  border-bottom: 1px solid #f0f0f0;
+  white-space: nowrap;
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.wbs-ticket-table tbody tr:hover {
+  background: #f0f7ff;
+}
+
+.wbs-ticket-panel__msg {
+  padding: 8px 16px;
+  margin: 0;
+  font-size: 12px;
+  color: #666;
+}
+
+/* WBS Upload */
+.wbs-upload {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.wbs-upload__input {
+  display: none;
+}
+
+.wbs-upload__sheet-select {
+  padding: 4px 8px;
+  font-size: 12px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
 }
