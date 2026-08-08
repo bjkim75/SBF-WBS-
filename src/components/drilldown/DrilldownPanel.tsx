@@ -3,7 +3,7 @@ import { useDataStore } from '../../store/dataStore';
 import { useFilterStore } from '../../store/filterStore';
 import { useUIStore, DrilldownContext } from '../../store/uiStore';
 import { getDrilldownData } from '../../core/analyzer/drilldownService';
-import { formatDate } from '../../utils/dateUtils';
+import { formatDate, formatStartDate } from '../../utils/dateUtils';
 
 export function DrilldownPanel() {
   const normalizedWorks = useDataStore(state => state.normalizedWorks);
@@ -53,7 +53,7 @@ export function DrilldownPanel() {
             {drilldownData.map(row => (
               <tr key={row.workId}>
                 <td>{row.milestone}</td>
-                <td>{formatDate(row.milestoneStart) || '-'}</td>
+                <td>{row.milestoneStart ? formatStartDate(row.milestoneStart) : '-'}</td>
                 <td>{formatDate(row.milestoneFinish) || '-'}</td>
                 <td>{row.division}</td>
                 <td className="drilldown-table__id">{row.workId}</td>

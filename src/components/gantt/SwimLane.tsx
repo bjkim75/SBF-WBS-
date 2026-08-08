@@ -1,6 +1,6 @@
 import { GanttSwimLane, GanttTimeScale } from '../../models/viewModel';
 import { DivisionGroup } from './DivisionGroup';
-import { formatDate } from '../../utils/dateUtils';
+import { formatDate, formatStartDate } from '../../utils/dateUtils';
 import { DrilldownContext } from '../../store/uiStore';
 
 interface Props {
@@ -13,7 +13,7 @@ interface Props {
 
 export function SwimLane({ lane, scale, isGrouped, onToggle, onDrilldown }: Props) {
   const dateRange = [
-    lane.startDate ? formatDate(lane.startDate) : '미정',
+    lane.startDate ? formatStartDate(lane.startDate) : '미정',
     lane.finishDate ? formatDate(lane.finishDate) : '미정',
   ].join(' ~ ');
 

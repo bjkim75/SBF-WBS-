@@ -4,31 +4,46 @@ import { useDataStore } from '../../store/dataStore';
 import { useFilterStore } from '../../store/filterStore';
 import { applyFilters } from '../../core/analyzer/filterEngine';
 import { computeAggregation } from '../../core/analyzer/aggregator';
-
-/**
- * Custom milestone sort: #1-1, #1-2, #2-1, ..., #7-3, 유선#1~#6, 마일스톤 미지정 last
- */
-function milestoneSortKey(name: string): string {
-  if (name === '마일스톤 미지정') return 'zzz';
-  if (name.startsWith('유선')) return 'yy_' + name;
-  return name.replace(/#(\d+)/g, (_, n) => '#' + n.padStart(2, '0'));
-}
+import { groupByMilestone } from '../../core/normalizer/milestoneGrouper';
+import { formatStartDate, formatDate } from '../../utils/dateUtils';
 
 export function AggregationPanel() {
   const normalizedWorks = useDataStore(state => state.normalizedWorks);
   const filters = useFilterStore(state => state.filters);
 
-  const aggregation = useMemo(() => {
-    const filtered = applyFilters(normalizedWorks, filters);
-    return computeAggregation(filtered);
+  const filteredWorks = useMemo(() => {
+    return applyFilters(normalizedWorks, filters);
   }, [normalizedWorks, filters]);
 
-  // Milestone bar chart data
+  const aggregation = useMemo(() => {
+    return computeAggregation(filteredWorks);
+  }, [filteredWorks]);
+
+  const milestoneGroups = useMemo(() => {
+    return groupByMilestone(filteredWorks);
+  }, [filteredWorks]);
+
+  // Milestone bar chart data (sorted by start date, earliest first)
   const milestoneData = useMemo(() => {
     return [...aggregation.byMilestone.entries()]
-      .map(([name, count]) => ({ name, count }))
-      .sort((a, b) => milestoneSortKey(a.name).localeCompare(milestoneSortKey(b.name)));
-  }, [aggregation]);
+      .map(([name, count]) => {
+        const group = milestoneGroups.find(g => g.milestone === name);
+        const dateLabel = group && (group.startDate || group.finishDate)
+          ? `${group.startDate ? formatStartDate(group.startDate) : '?'} ~ ${group.finishDate ? formatDate(group.finishDate) : '?'}`
+          : '';
+        return { name, count, dateLabel, startDate: group?.startDate || null };
+      })
+      .sort((a, b) => {
+        // 마일스톤 미지정 always last
+        if (a.name === '마일스톤 미지정') return 1;
+        if (b.name === '마일스톤 미지정') return -1;
+        // Sort by startDate (null dates go after dated ones)
+        if (!a.startDate && !b.startDate) return 0;
+        if (!a.startDate) return 1;
+        if (!b.startDate) return -1;
+        return a.startDate.getTime() - b.startDate.getTime();
+      });
+  }, [aggregation, milestoneGroups]);
 
   // Division bar chart data
   const divisionData = useMemo(() => {
@@ -43,9 +58,26 @@ export function AggregationPanel() {
         <h3>Milestone별 업무 수</h3>
         <div style={{ minWidth: Math.max(600, milestoneData.length * 50), width: '100%' }}>
           <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={milestoneData} margin={{ top: 5, right: 30, left: 20, bottom: 60 }}>
+            <BarChart data={milestoneData} margin={{ top: 5, right: 30, left: 20, bottom: 80 }}>
               <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="name" angle={-45} textAnchor="end" fontSize={11} />
+              <XAxis
+                dataKey="name"
+                interval={0}
+                height={70}
+                tick={({ x, y, payload }: any) => {
+                  const item = milestoneData.find((d: any) => d.name === payload.value);
+                  return (
+                    <g transform={`translate(${x},${y})`}>
+                      <text x={0} y={0} dy={12} textAnchor="middle" fontSize={11} fill="#333">
+                        {payload.value}
+                      </text>
+                      <text x={0} y={0} dy={26} textAnchor="middle" fontSize={9} fill="#888">
+                        {item?.dateLabel || ''}
+                      </text>
+                    </g>
+                  );
+                }}
+              />
               <YAxis />
               <Tooltip />
               <Bar dataKey="count" fill="#4a90d9" name="업무 수">

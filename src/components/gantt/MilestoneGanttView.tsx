@@ -5,6 +5,7 @@ import { useUIStore } from '../../store/uiStore';
 import { applyFilters } from '../../core/analyzer/filterEngine';
 import { groupByMilestone } from '../../core/normalizer/milestoneGrouper';
 import { calculateTimeScale, computeBarPosition } from '../../core/analyzer/timelineCalculator';
+import { formatDate } from '../../utils/dateUtils';
 import { GanttSwimLane, GanttDivisionGroup, GanttRow, GanttTimeScale } from '../../models/viewModel';
 import { NormalizedWork } from '../../models/normalized';
 import { TimeAxisHeader } from './TimeAxisHeader';
@@ -51,6 +52,8 @@ export function MilestoneGanttView() {
         workCount: group.workCount,
         isExpanded: expandedSwimlanes.has(group.milestone),
         divisionGroups,
+        isUniformDates: group.isUniformDates,
+        phases: group.works[0]?.phases || [],
       };
     });
 
@@ -104,8 +107,42 @@ export function MilestoneGanttView() {
   );
 }
 
+/**
+ * 두 날짜 간 일수 차이 (소수점 포함)
+ */
+function daysBetween(start: Date, end: Date): number {
+  return (end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24);
+}
+
 function buildGanttRow(work: NormalizedWork, scale: GanttTimeScale): GanttRow {
   const { barStartPx, barWidthPx } = computeBarPosition(work, scale);
+
+  // Build phase segments from work.phases
+  const phaseSegments: { name: string; startPx: number; widthPx: number; colorIndex: number; dateStr: string }[] = [];
+  const validPhases = work.phases.filter(p => p.date !== null);
+
+  for (let i = 0; i < validPhases.length; i++) {
+    const phase = validPhases[i];
+    const phaseStartPx = daysBetween(scale.startDate, phase.date!) * scale.pxPerDay;
+
+    // Width: from this phase date to next phase date (or 20px for last)
+    const nextPhase = validPhases[i + 1];
+    let segmentWidth: number;
+    if (nextPhase?.date) {
+      segmentWidth = daysBetween(phase.date!, nextPhase.date) * scale.pxPerDay;
+    } else {
+      segmentWidth = 20; // last phase fixed width
+    }
+
+    phaseSegments.push({
+      name: phase.name,
+      startPx: phaseStartPx,
+      widthPx: Math.max(segmentWidth, 4),
+      colorIndex: work.phases.indexOf(phase), // original index for consistent colors
+      dateStr: formatDate(phase.date!) || '',
+    });
+  }
+
   return {
     workId: work.workId,
     workName: work.workName,
@@ -116,5 +153,6 @@ function buildGanttRow(work: NormalizedWork, scale: GanttTimeScale): GanttRow {
     isPointMarker: work.isPointMarker,
     barStartPx,
     barWidthPx,
+    phaseSegments,
   };
 }

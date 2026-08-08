@@ -83,6 +83,18 @@ export function formatDate(date: Date | null): string | null {
 }
 
 /**
+ * Start date를 "YYYY.N월" 형식으로 표시
+ * 예: 2026-01-01 → "2026.1월", 2026-03-01 → "2026.3월"
+ * 
+ * @param date - Start Date (해당 월 1일로 보정된 값)
+ * @returns "YYYY.N월" 형식 문자열 또는 '미정'
+ */
+export function formatStartDate(date: Date | null): string {
+  if (!date) return '미정';
+  return `${date.getFullYear()}.${date.getMonth() + 1}월`;
+}
+
+/**
  * Cell 값이 유효한 Excel 날짜 serial인지 판별
  * 
  * @param value - Cell에서 읽은 원시 값

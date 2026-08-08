@@ -6,6 +6,7 @@ import { FilterPanel } from './components/filter/FilterPanel';
 import { AggregationPanel } from './components/aggregation/AggregationPanel';
 import { MilestoneGanttView } from './components/gantt/MilestoneGanttView';
 import { DrilldownPanel } from './components/drilldown/DrilldownPanel';
+import { DownloadButton } from './components/download/DownloadButton';
 import { SchemaValidationResult } from './models/raw';
 import { useDataStore } from './store/dataStore';
 import { useFilterStore } from './store/filterStore';
@@ -56,6 +57,12 @@ function App() {
           <section className="app__error" role="alert">
             <h2>오류</h2>
             <p>{error}</p>
+          </section>
+        )}
+
+        {hasData && (
+          <section className="app__download">
+            <DownloadButton />
           </section>
         )}
 

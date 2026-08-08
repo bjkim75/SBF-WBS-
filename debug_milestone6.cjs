@@ -3,121 +3,142 @@ const path = require('path');
 const fs = require('fs');
 
 const filePath = path.join(__dirname, 'sample-data', 'SBF_Framework.xlsx');
-const workbook = XLSX.read(fs.readFileSync(filePath), { type: 'buffer' });
+const workbook = XLSX.read(fs.readFileSync(filePath), { type: 'buffer', cellNF: true });
 const sheet = workbook.Sheets['1. IA'];
 const range = XLSX.utils.decode_range(sheet['!ref']);
 
-// The user says: Excel에서 milestone = 빈칸을 필터하면 IT Admin에서 1건만 나온다
-// BUT: 우리 데이터에서 IT Admin 221행(212 distinct workID) 모두 milestone이 비어있음
-//
-// 가장 유력한 가설: 사용자가 보는 "구분" 컬럼에서 IT Admin을 다른 구분으로 인식
-// 구분 = "IT Admin" 행들은 실제 워크 데이터가 아닌, IA초안처럼 별도 섹션일 수 있음
-//
-// 즉, 사용자의 기대:
-// - "구분"이 "IA초안"뿐 아니라 "IT Admin"도 분석 제외 대상이어야 할 수 있음
-// - 이 경우 실제 분석 대상은 "고객 여정", "운영 지원", "전략 기획"만
+// Column indices
+const msColIdx = 18;      // milestone
+const startColIdx = 19;   // 업무 Flow 초안 (Start)
+const finishColIdx = 27;  // figma 디자인 (Finish)
+const workIdIdx = 1;      // 업무ID
+const categoryIdx = 5;    // 구분
+const divisionIdx = 4;    // 담당 분과
 
-console.log('=== 구분(Category) 분석 ===\n');
+// Excel serial to date string
+function serialToDate(serial) {
+  if (!serial || typeof serial !== 'number' || serial < 1) return null;
+  const epoch = new Date(1899, 11, 30);
+  const days = Math.floor(serial);
+  const date = new Date(epoch.getTime() + days * 24 * 60 * 60 * 1000);
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const d = String(date.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+}
 
-// 구분별 milestone 분포
-const categories = ['고객 여정', '운영 지원', '전략 기획', 'IT Admin', 'IA초안'];
+// Collect data per milestone
+const milestones = new Map(); // ms → { starts: [], finishes: [], workIds: Set }
 
-for (const cat of categories) {
-  let total = 0;
-  let emptyMs = 0;
-  const workIds = new Set();
-  const emptyMsWorkIds = new Set();
+for (let r = 1; r <= range.e.r; r++) {
+  const catCell = sheet[XLSX.utils.encode_cell({ r, c: categoryIdx })];
+  const catVal = catCell && catCell.v != null ? String(catCell.v).trim() : '';
+  if (catVal === 'IA초안') continue; // exclude
+
+  const msCell = sheet[XLSX.utils.encode_cell({ r, c: msColIdx })];
+  const msVal = msCell && msCell.v != null ? String(msCell.v).trim() : '';
+  if (!msVal) continue;
+
+  const startCell = sheet[XLSX.utils.encode_cell({ r, c: startColIdx })];
+  const finishCell = sheet[XLSX.utils.encode_cell({ r, c: finishColIdx })];
+  const workIdCell = sheet[XLSX.utils.encode_cell({ r, c: workIdIdx })];
   
-  for (let r = 1; r <= range.e.r; r++) {
-    const catCell = sheet[XLSX.utils.encode_cell({ r, c: 5 })];
-    const catVal = catCell && catCell.v != null ? String(catCell.v).trim() : '';
-    
-    if (catVal === cat) {
-      total++;
-      const wkCell = sheet[XLSX.utils.encode_cell({ r, c: 1 })];
-      const wkVal = wkCell && wkCell.v != null ? String(wkCell.v).trim() : '';
-      if (wkVal) workIds.add(wkVal);
-      
-      const msCell = sheet[XLSX.utils.encode_cell({ r, c: 18 })];
-      const msVal = msCell && msCell.v != null ? String(msCell.v).trim() : '';
-      if (msVal === '') {
-        emptyMs++;
-        if (wkVal) emptyMsWorkIds.add(wkVal);
+  const startVal = startCell && typeof startCell.v === 'number' ? startCell.v : null;
+  const finishVal = finishCell && typeof finishCell.v === 'number' ? finishCell.v : null;
+  const workId = workIdCell && workIdCell.v != null ? String(workIdCell.v).trim() : '';
+
+  if (!milestones.has(msVal)) {
+    milestones.set(msVal, { starts: [], finishes: [], workIds: new Set() });
+  }
+  const ms = milestones.get(msVal);
+  if (startVal) ms.starts.push(startVal);
+  if (finishVal) ms.finishes.push(finishVal);
+  if (workId) ms.workIds.add(workId);
+}
+
+// Analyze each milestone
+console.log('=== Milestone Date Structure Analysis ===\n');
+console.log(`Total milestones: ${milestones.size}\n`);
+
+const msData = [];
+for (const [name, data] of milestones) {
+  const minStart = data.starts.length > 0 ? Math.min(...data.starts) : null;
+  const maxStart = data.starts.length > 0 ? Math.max(...data.starts) : null;
+  const minFinish = data.finishes.length > 0 ? Math.min(...data.finishes) : null;
+  const maxFinish = data.finishes.length > 0 ? Math.max(...data.finishes) : null;
+  
+  msData.push({
+    name,
+    workCount: data.workIds.size,
+    startCount: data.starts.length,
+    finishCount: data.finishes.length,
+    minStart: serialToDate(minStart),
+    maxStart: serialToDate(maxStart),
+    minFinish: serialToDate(minFinish),
+    maxFinish: serialToDate(maxFinish),
+    startSpread: minStart && maxStart ? maxStart - minStart : 0,
+    finishSpread: minFinish && maxFinish ? maxFinish - minFinish : 0,
+    duration: minStart && maxFinish ? maxFinish - minStart : null,
+  });
+}
+
+// Sort by earliest start date
+msData.sort((a, b) => {
+  if (!a.minStart && !b.minStart) return 0;
+  if (!a.minStart) return 1;
+  if (!b.minStart) return -1;
+  return a.minStart.localeCompare(b.minStart);
+});
+
+console.log('Milestone | 업무수 | Start범위 | Finish범위 | 기간(일) | Start편차(일) | Finish편차(일)');
+console.log('-'.repeat(120));
+for (const ms of msData) {
+  console.log(
+    `${ms.name.padEnd(10)} | ${String(ms.workCount).padStart(4)} | ${ms.minStart || 'N/A'} ~ ${ms.maxStart || 'N/A'} | ${ms.minFinish || 'N/A'} ~ ${ms.maxFinish || 'N/A'} | ${ms.duration ? String(ms.duration).padStart(5) : '  N/A'} | ${String(ms.startSpread).padStart(5)} | ${String(ms.finishSpread).padStart(5)}`
+  );
+}
+
+// Overlap analysis
+console.log('\n\n=== Milestone 시간 겹침 분석 ===\n');
+for (let i = 0; i < msData.length; i++) {
+  for (let j = i + 1; j < msData.length; j++) {
+    const a = msData[i];
+    const b = msData[j];
+    if (a.minStart && b.minStart && a.maxFinish && b.maxFinish) {
+      // Check overlap: A starts before B ends AND B starts before A ends
+      if (a.minStart <= b.maxFinish && b.minStart <= a.maxFinish) {
+        console.log(`  겹침: ${a.name} (${a.minStart}~${a.maxFinish}) ↔ ${b.name} (${b.minStart}~${b.maxFinish})`);
       }
     }
   }
-  
-  console.log(`구분="${cat}":`);
-  console.log(`  Total rows: ${total}`);
-  console.log(`  Distinct 업무IDs: ${workIds.size}`);
-  console.log(`  Empty milestone rows: ${emptyMs}`);
-  console.log(`  Distinct 업무IDs with empty MS: ${emptyMsWorkIds.size}`);
-  console.log('');
 }
 
-// 핵심 질문: "IT Admin" 구분의 행들이 "담당 분과" = "IT Admin"과 완전히 동일한지?
-console.log('\n=== 구분="IT Admin" vs 담당 분과="IT Admin" 비교 ===');
-const catItAdmin = new Set();
-const divItAdmin = new Set();
+// Pattern analysis
+console.log('\n\n=== 패턴 분석 ===\n');
 
-for (let r = 1; r <= range.e.r; r++) {
-  const catCell = sheet[XLSX.utils.encode_cell({ r, c: 5 })];
-  const divCell = sheet[XLSX.utils.encode_cell({ r, c: 4 })];
-  const catVal = catCell && catCell.v != null ? String(catCell.v).trim() : '';
-  const divVal = divCell && divCell.v != null ? String(divCell.v).trim() : '';
-  
-  if (catVal === 'IT Admin') catItAdmin.add(r);
-  if (divVal === 'IT Admin') divItAdmin.add(r);
+// Are all tasks in a milestone have the SAME start date?
+let sameStartCount = 0;
+let diffStartCount = 0;
+for (const ms of msData) {
+  if (ms.startSpread === 0 && ms.startCount > 1) sameStartCount++;
+  else if (ms.startSpread > 0) diffStartCount++;
 }
+console.log(`Start 날짜가 동일한 Milestone: ${sameStartCount}개`);
+console.log(`Start 날짜가 다른 Milestone: ${diffStartCount}개`);
 
-console.log(`구분=IT Admin rows: ${catItAdmin.size}`);
-console.log(`담당 분과=IT Admin rows: ${divItAdmin.size}`);
-console.log(`Same set? ${[...catItAdmin].every(r => divItAdmin.has(r)) && [...divItAdmin].every(r => catItAdmin.has(r))}`);
+let sameFinishCount = 0;
+let diffFinishCount = 0;
+for (const ms of msData) {
+  if (ms.finishSpread === 0 && ms.finishCount > 1) sameFinishCount++;
+  else if (ms.finishSpread > 0) diffFinishCount++;
+}
+console.log(`Finish 날짜가 동일한 Milestone: ${sameFinishCount}개`);
+console.log(`Finish 날짜가 다른 Milestone: ${diffFinishCount}개`);
 
-// 만약 구분="IT Admin"이 실제로 IT Admin 업무 전용 섹션이라면,
-// 이를 IA초안처럼 제외하면 "마일스톤 미지정"에서 IT Admin 212건이 사라짐
-// 그리고 나머지 분과 중 milestone=빈값인 것만 남음
-
-console.log('\n=== 만약 구분="IT Admin" 제외 시 "마일스톤 미지정" 분포 ===');
-const excludedCats = new Set(['IA초안', 'IT Admin']);
-const emptyMsByDiv = new Map();
-
-for (let r = 1; r <= range.e.r; r++) {
-  const catCell = sheet[XLSX.utils.encode_cell({ r, c: 5 })];
-  const catVal = catCell && catCell.v != null ? String(catCell.v).trim() : '';
-  if (excludedCats.has(catVal)) continue;
-  
-  const wkCell = sheet[XLSX.utils.encode_cell({ r, c: 1 })];
-  const wkVal = wkCell && wkCell.v != null ? String(wkCell.v).trim() : '';
-  if (!wkVal) continue;
-  
-  const msCell = sheet[XLSX.utils.encode_cell({ r, c: 18 })];
-  const msVal = msCell && msCell.v != null ? String(msCell.v).trim() : '';
-  
-  if (msVal === '') {
-    const divCell = sheet[XLSX.utils.encode_cell({ r, c: 4 })];
-    const divVal = divCell && divCell.v != null ? String(divCell.v).trim() : '(null/empty)';
-    if (!emptyMsByDiv.has(divVal)) emptyMsByDiv.set(divVal, new Set());
-    emptyMsByDiv.get(divVal).add(wkVal);
+// Check: is the milestone a "deadline group" (all finish at same date)?
+console.log('\n--- Finish 날짜 분포 상세 ---');
+for (const ms of msData) {
+  if (ms.finishCount > 0) {
+    console.log(`  ${ms.name}: Finish 편차 ${ms.finishSpread}일 (${ms.minFinish} ~ ${ms.maxFinish})`);
   }
 }
-
-let total = 0;
-for (const [div, wids] of [...emptyMsByDiv.entries()].sort()) {
-  console.log(`  "${div}": ${wids.size} distinct 업무IDs`);
-  total += wids.size;
-}
-console.log(`  TOTAL "마일스톤 미지정" (excluding IT Admin+IA초안): ${total}`);
-
-// 여기서 "IT Admin" 분과가 나타날 수 있는가?
-// 아니 — 구분="IT Admin"이면서 담당 분과="IT Admin"이 같은 세트니까
-// IT Admin 제외하면 담당 분과 "IT Admin"도 사라짐
-
-console.log('\n=== 결론 ===');
-console.log('구분="IT Admin" (221행, 212 distinct 업무ID)은 전부 milestone이 비어있음.');
-console.log('이들의 "담당 분과"도 "IT Admin".');
-console.log('');
-console.log('가능한 해결책:');
-console.log('1) 구분="IT Admin"도 IA초안처럼 분석 제외 대상으로 설정');
-console.log('2) 또는 현행 유지하되, 사용자에게 "IT Admin은 milestone 미지정이 정상"임을 안내');
-console.log('3) 사용자의 "Excel에서 1건" 주장은 다른 필터 조건이 적용된 상태일 수 있음');

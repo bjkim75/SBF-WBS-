@@ -415,7 +415,7 @@
 .task-row {
   display: flex;
   align-items: center;
-  height: 28px;
+  height: 30px;
   border-bottom: 1px solid #f5f5f5;
 }
 
@@ -663,4 +663,66 @@
   font-size: 10px;
   color: #999;
   text-align: right;
+}
+
+
+/* Phase Color Bar */
+.phase-segment {
+  position: absolute;
+  top: 4px;
+  height: 20px;
+  border-radius: 3px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  cursor: default;
+}
+
+.phase-segment__label {
+  font-size: 9px;
+  color: white;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  padding: 0 3px;
+}
+
+/* Phase colors */
+.phase-segment--0 { background: #1976d2; } /* 업무Flow 초안 */
+.phase-segment--1 { background: #388e3c; } /* 업무Flow 상세 */
+.phase-segment--2 { background: #f57c00; } /* 업무Flow 피드백 */
+.phase-segment--3 { background: #f57c00; } /* 업무Flow 보완 */
+.phase-segment--4 { background: #7b1fa2; } /* 스토리보드 v0.2 */
+.phase-segment--5 { background: #9c27b0; } /* 스토리보드 v0.5 */
+.phase-segment--6 { background: #ab47bc; } /* 스토리보드 v0.8 */
+.phase-segment--7 { background: #ce93d8; } /* 스토리보드 v1.0 */
+.phase-segment--8 { background: #d32f2f; } /* figma 디자인 */
+
+
+/* Download Button */
+.app__download {
+  margin-bottom: 16px;
+}
+
+.download-btn {
+  padding: 8px 16px;
+  font-size: 13px;
+  font-weight: 500;
+  border: 1px solid #1976d2;
+  border-radius: 6px;
+  background: #1976d2;
+  color: white;
+  cursor: pointer;
+}
+
+.download-btn:hover {
+  background: #1565c0;
+}
+
+.download-btn:disabled {
+  background: #ccc;
+  border-color: #ccc;
+  cursor: default;
 }

@@ -1,5 +1,5 @@
 import { IAColumnMap } from '../../models/raw';
-import { IA_HEADER_MAPPING, IA_REQUIRED_HEADERS } from '../constants/iaSchema';
+import { IA_HEADER_MAPPING, IA_REQUIRED_HEADERS, IA_PHASE_HEADERS_ORDERED } from '../constants/iaSchema';
 
 /**
  * 헤더 이름 정규화 (case-insensitive, whitespace-trimmed)
@@ -50,7 +50,20 @@ export function mapIAColumns(headers: string[]): IAColumnMap {
     assigneeAXPlan: findColumnIndex(IA_HEADER_MAPPING.assigneeAXPlan),
     assigneeAXDev: findColumnIndex(IA_HEADER_MAPPING.assigneeAXDev),
     orgT: findColumnIndex(IA_HEADER_MAPPING.orgT),
+    phaseColumns: [], // will be populated below
   };
+
+  // Phase columns mapping (date-ordered, from IA Sheet actual headers)
+  const phaseColumns: { name: string; index: number }[] = [];
+  for (const phaseName of IA_PHASE_HEADERS_ORDERED) {
+    const idx = findColumnIndex(phaseName);
+    if (idx >= 0) {
+      // Use the actual header name from the file (not the constant) for display
+      const actualName = headers[idx] ? headers[idx].trim() : phaseName;
+      phaseColumns.push({ name: actualName, index: idx });
+    }
+  }
+  columnMap.phaseColumns = phaseColumns;
 
   // 필수 헤더 누락 검증
   const missingRequired: string[] = [];

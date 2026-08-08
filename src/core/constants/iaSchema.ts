@@ -81,6 +81,23 @@ export const NULL_SUBSTITUTES = {
 export const IA_SHEET_NAME = '1. IA';
 
 /**
+ * Phase Column 헤더 목록 (시간 순서대로)
+ * IA Sheet의 Col T ~ Col AB에 해당하는 산출물 단계
+ * 이 목록의 순서 = 날짜 순서 (물리적 Column 순서가 아님)
+ */
+export const IA_PHASE_HEADERS_ORDERED: readonly string[] = [
+  '업무 Flow 초안',
+  '업무Flow 상세',
+  '업무Flow 피드백',
+  '업무Flow 보완',
+  '스토리보드 v0.2',
+  '스토리보드 v0.5',
+  '스토리보드 v0.8',
+  '스토리보드 v1.0',
+  'figma 디자인',
+] as const;
+
+/**
  * 기본 제외 분과 목록
  * 이 목록에 포함된 분과는 기본적으로 모든 집계에서 제외됨
  * 사용자가 필터에서 "제외 해제"하여 포함시킬 수 있음

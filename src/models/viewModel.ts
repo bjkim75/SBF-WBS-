@@ -32,6 +32,10 @@ export interface GanttSwimLane {
   workCount: number;
   isExpanded: boolean;
   divisionGroups: GanttDivisionGroup[];
+  /** 모든 업무의 Start/Finish가 동일한지 (true → Phase 색상 bar, false → 개별 bar) */
+  isUniformDates: boolean;
+  /** Phase별 날짜 배열 (첫 번째 업무에서 추출) */
+  phases: { name: string; date: Date | null }[];
 }
 
 /**
@@ -57,4 +61,6 @@ export interface GanttRow {
   barStartPx: number;
   /** bar 너비 (px, point marker면 0) */
   barWidthPx: number;
+  /** Phase별 색상 구간 */
+  phaseSegments: { name: string; startPx: number; widthPx: number; colorIndex: number; dateStr: string }[];
 }

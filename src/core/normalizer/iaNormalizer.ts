@@ -104,9 +104,23 @@ export function normalize(rawSheet: RawSheet, columnMap: IAColumnMap): Normalize
     if (startDate && isNaN(startDate.getTime())) startDate = null;
     if (finishDate && isNaN(finishDate.getTime())) finishDate = null;
 
+    // Start date 보정: 해당 월의 1일로 설정 (업무 착수가 월초에 시작되는 것을 근사)
+    if (startDate) {
+      startDate = new Date(startDate.getFullYear(), startDate.getMonth(), 1);
+    }
+
     // Gantt 표시 플래그
     const isGanttVisible = !(startDate == null && finishDate == null);
     const isPointMarker = startDate != null && finishDate == null;
+
+    // Phase 날짜 추출
+    const phases: { name: string; date: Date | null }[] = [];
+    for (const phase of columnMap.phaseColumns) {
+      const raw = getCellNumber(cells, phase.index);
+      let phaseDate = excelSerialToDate(raw);
+      if (phaseDate && isNaN(phaseDate.getTime())) phaseDate = null;
+      phases.push({ name: phase.name, date: phaseDate });
+    }
 
     const work: NormalizedWork = {
       workId,
@@ -129,6 +143,7 @@ export function normalize(rawSheet: RawSheet, columnMap: IAColumnMap): Normalize
       sourceRows,
       isGanttVisible,
       isPointMarker,
+      phases,
     };
 
     results.push(work);

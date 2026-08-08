@@ -14,7 +14,19 @@ export function TaskRow({ row, scale }: Props) {
         <span className="task-row__assignee" title={row.assigneeR}>{row.assigneeR}</span>
       </div>
       <div className="task-row__timeline" style={{ width: scale.totalWidth }}>
-        {row.isPointMarker ? (
+        {row.phaseSegments.length > 0 ? (
+          // Phase color bar (multi-segment)
+          row.phaseSegments.map((seg, i) => (
+            <div
+              key={i}
+              className={`phase-segment phase-segment--${seg.colorIndex}`}
+              style={{ left: seg.startPx, width: seg.widthPx }}
+              title={`${seg.name}: ${seg.dateStr}`}
+            >
+              <span className="phase-segment__label">{seg.name}</span>
+            </div>
+          ))
+        ) : row.isPointMarker ? (
           <div
             className="task-row__point"
             style={{ left: row.barStartPx }}

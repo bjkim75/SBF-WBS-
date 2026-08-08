@@ -1,6 +1,25 @@
 import { NormalizedWork, MilestoneGroup } from '../../models/normalized';
 
 /**
+ * 모든 업무의 startDate/finishDate가 동일한지 확인
+ * true → Phase 색상 bar 표시 (#N-N 계열)
+ * false → 개별 bar 유지 (유선# 계열)
+ */
+function checkUniformDates(works: NormalizedWork[]): boolean {
+  if (works.length <= 1) return true;
+  const firstStart = works[0].startDate?.getTime() ?? null;
+  const firstFinish = works[0].finishDate?.getTime() ?? null;
+  for (let i = 1; i < works.length; i++) {
+    const s = works[i].startDate?.getTime() ?? null;
+    const f = works[i].finishDate?.getTime() ?? null;
+    if (s !== firstStart || f !== firstFinish) {
+      return false;
+    }
+  }
+  return true;
+}
+
+/**
  * NormalizedWork[] → MilestoneGroup[] 변환
  *
  * 처리:
@@ -63,6 +82,7 @@ export function groupByMilestone(works: NormalizedWork[]): MilestoneGroup[] {
       works: milestoneWorks,
       workCount: milestoneWorks.length,
       divisionGroups,
+      isUniformDates: checkUniformDates(milestoneWorks),
     });
   }
 

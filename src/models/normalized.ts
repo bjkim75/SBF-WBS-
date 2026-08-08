@@ -43,6 +43,8 @@ export interface NormalizedWork {
   isGanttVisible: boolean;
   /** Point Marker 여부: startDate!=null && finishDate==null (TD-5) */
   isPointMarker: boolean;
+  /** Phase별 날짜 배열 — IA Sheet의 각 산출물 단계 완료일 */
+  phases: { name: string; date: Date | null }[];
 }
 
 /**
@@ -61,4 +63,6 @@ export interface MilestoneGroup {
   workCount: number;
   /** 분과별 서브그룹 (TD-3: 분과 Grouping) */
   divisionGroups: Map<string, NormalizedWork[]>;
+  /** 모든 업무의 Start/Finish가 동일한지 (true → Phase 색상 bar, false → 개별 bar 유지) */
+  isUniformDates: boolean;
 }

@@ -51,4 +51,6 @@ export interface IAColumnMap {
   assigneeAXPlan: number;     // 상세화담당자(AX기획)
   assigneeAXDev: number;      // 상세화담당자(AX개발)
   orgT: number;               // 담당구분(T)
+  /** Phase Column 인덱스 배열 (날짜 순서대로) — { name: header명, index: column index } */
+  phaseColumns: { name: string; index: number }[];
 }

@@ -21,6 +21,7 @@ function makeColumnMap(): IAColumnMap {
     milestone: 9, startDate: 10, finishDate: 11,
     l3Name: 12, projectName: 13, assigneeR: 14,
     assigneeAXPlan: 15, assigneeAXDev: 16, orgT: 17,
+    phaseColumns: [],
   };
 }
 
