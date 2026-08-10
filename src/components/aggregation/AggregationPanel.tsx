@@ -58,24 +58,18 @@ export function AggregationPanel() {
         <h3>Milestone별 업무 수</h3>
         <div style={{ minWidth: Math.max(600, milestoneData.length * 50), width: '100%' }}>
           <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={milestoneData} margin={{ top: 5, right: 30, left: 20, bottom: 80 }}>
+            <BarChart data={milestoneData} margin={{ top: 20, right: 30, left: 20, bottom: 60 }}>
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis
                 dataKey="name"
                 interval={0}
-                height={70}
-                tick={({ x, y, payload }: any) => {
-                  const item = milestoneData.find((d: any) => d.name === payload.value);
-                  return (
-                    <g transform={`translate(${x},${y})`}>
-                      <text x={0} y={0} dy={12} textAnchor="middle" fontSize={11} fill="#333">
-                        {payload.value}
-                      </text>
-                      <text x={0} y={0} dy={26} textAnchor="middle" fontSize={9} fill="#888">
-                        {item?.dateLabel || ''}
-                      </text>
-                    </g>
-                  );
+                angle={-45}
+                textAnchor="end"
+                fontSize={11}
+                height={80}
+                tickFormatter={(value: string) => {
+                  const item = milestoneData.find((d: any) => d.name === value);
+                  return item?.dateLabel ? `${value} (${item.dateLabel})` : value;
                 }}
               />
               <YAxis />

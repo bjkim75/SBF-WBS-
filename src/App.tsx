@@ -8,6 +8,8 @@ import { MilestoneGanttView } from './components/gantt/MilestoneGanttView';
 import { DrilldownPanel } from './components/drilldown/DrilldownPanel';
 import { WbsTicketPanel } from './components/wbs/WbsTicketPanel';
 import { DownloadButton } from './components/download/DownloadButton';
+import { ComparisonFileUpload } from './components/comparison/ComparisonFileUpload';
+import { ComparisonResultPanel } from './components/comparison/ComparisonResultPanel';
 import { SchemaValidationResult } from './models/raw';
 import { useDataStore } from './store/dataStore';
 import { useFilterStore } from './store/filterStore';
@@ -64,6 +66,7 @@ function App() {
         {hasData && (
           <section className="app__download">
             <DownloadButton />
+            <ComparisonFileUpload />
           </section>
         )}
 
@@ -105,6 +108,8 @@ function App() {
             </div>
           </section>
         )}
+
+        <ComparisonResultPanel />
       </main>
     </div>
   );
