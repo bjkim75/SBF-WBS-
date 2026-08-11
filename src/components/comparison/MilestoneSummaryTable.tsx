@@ -17,6 +17,8 @@ export function MilestoneSummaryTable() {
               <th>Before</th>
               <th>After</th>
               <th>증감</th>
+              <th>추가 수</th>
+              <th>삭제 수</th>
               <th>추가 업무ID</th>
               <th>삭제 업무ID</th>
             </tr>
@@ -30,6 +32,8 @@ export function MilestoneSummaryTable() {
                 <td className={`comparison-table__num ${s.delta > 0 ? 'comparison-table__positive' : s.delta < 0 ? 'comparison-table__negative' : ''}`}>
                   {s.delta > 0 ? `+${s.delta}` : s.delta}
                 </td>
+                <td className="comparison-table__num comparison-table__positive">{s.addedWorkIds.length > 0 ? `+${s.addedWorkIds.length}` : '-'}</td>
+                <td className="comparison-table__num comparison-table__negative">{s.deletedWorkIds.length > 0 ? `-${s.deletedWorkIds.length}` : '-'}</td>
                 <td className="comparison-table__ids">{s.addedWorkIds.join(', ') || '-'}</td>
                 <td className="comparison-table__ids">{s.deletedWorkIds.join(', ') || '-'}</td>
               </tr>

@@ -1037,6 +1037,21 @@
   width: 100%;
   border-collapse: collapse;
   font-size: 11px;
+  table-layout: fixed;
+}
+
+.comparison-table th:nth-child(1) { width: 120px; } /* 분과/Milestone */
+.comparison-table th:nth-child(2) { width: 60px; }  /* Before */
+.comparison-table th:nth-child(3) { width: 60px; }  /* After */
+.comparison-table th:nth-child(4) { width: 60px; }  /* 증감 */
+.comparison-table th:nth-child(5) { width: 60px; }  /* 추가 수 */
+.comparison-table th:nth-child(6) { width: 60px; }  /* 삭제 수 */
+.comparison-table th:nth-child(7) { width: auto; }  /* 추가 업무ID */
+.comparison-table th:nth-child(8) { width: auto; }  /* 삭제 업무ID */
+
+.comparison-table td:first-child {
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .comparison-table th {
